@@ -1,91 +1,57 @@
-#include<stdio.h>
-#include<string.h>
-#include<malloc.h>
-typedef struct hnode
-{
-    int weight;
-    int lchild, rchild, parent;
-}HTNode, * HuffmanTree;/*定义二叉树的存储结点*/
-typedef char** HuffmanCode;
-void Select(HTNode HT[], int len, int& s1, int& s2)
-{
-    int i, min1 = 32767, min2 = 32767;
-    for (i = 1;i <= len;i++) {
-        if (HT[i].weight < min1 && HT[i].parent == 0) {
-            s2 = s1;
-            min2 = min1;
-            min1 = HT[i].weight;
-            s1 = i;
-        } else if (HT[i].weight < min2 && HT[i].parent == 0) {
-            min2 = HT[i].weight;
-            s2 = i;
-        }
-    }
-}
-void CreateHuffman_tree(HuffmanTree &HT,int n)
-{
-    int s1,s2,i;
-    if(n<=1) return;
-    int m = 2*n-1;
-    HT = (HTNode*)malloc((m+1)*sizeof(HTNode));
-    for(i=1;i<=m;i++)
-    {
-        HT[i].lchild=0;
-        HT[i].rchild=0;
-        HT[i].parent=0;
-    }
-    for(i=1;i<=n;i++)
-    {
-        scanf("%d",&HT[i].weight);
-    }
-    for(i=n+1;i<=m;i++)
-    {
-        Select(HT,i-1,s1,s2);
-        HT[i].lchild = s1;
-        HT[i].rchild = s2;
-        HT[s1].parent = i;
-        HT[s2].parent = i;
-        HT[i].weight = HT[s1].weight + HT[s2].weight;
-    }
-}
-void Huffman_code(HuffmanTree HT,HuffmanCode &HC,int n)
-{
-    if(n<=1)
-        return ;
-    HC = (char**)malloc((n+1)*sizeof(char));
-    int i,begin,m,f;
-    char cd[n];//s中不能直接使用cd[n]，数组大小为n
-    cd[n-1] = '\0';
-    for(i=1;i<=n;i++)
-    {
-        begin = n-1;
-        m = i;
-        f = HT[i].parent;
-        while(f!=0)
-        {
-            begin--;
-            if(HT[f].lchild==m)
-                cd[begin] = '0';//0和1要加单引号
-            else
-                cd[begin]= '1';
-            m = f;
-            f = HT[f].parent;
-        }
-        HC[i] = (char*)malloc((n-begin)*sizeof(char));
-        strcpy(HC[i],&cd[begin]);
-    }
-}
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_VERTEX_NUM 10 /*定义最大顶点数*/
+typedef int Vertex;
+typedef struct ArcNode
+{                            /*表结点*/
+    int adjvex;              /*邻接点域*/
+    struct ArcNode *nextarc; /*指向下一个表结点*/
+} ArcNode;
+typedef struct VNode
+{                                 /*头结点*/
+    Vertex data;                  /*顶点域*/
+    ArcNode *firstarc;            /*指向第一个表结点*/
+} VNode, AdjList[MAX_VERTEX_NUM]; /*AdjList是数组类型*/
+typedef struct
+{
+    AdjList vertices;   /*邻接表中数组定义*/
+    int vexnum, arcnum; /*图中当前顶点数和边数*/
+} ALGraph;              /*图类型*/
+typedef enum
+{
+    FALSE,
+    TRUE
+} Boolean;
+Boolean visited[MAX_VERTEX_NUM]; /*定义标志向量，为全局变量*/
+void CreatALGraph(ALGraph *G);   /* 创建图并且将Visited初始化为false；裁判实现，细节不表 */
+void BFS(ALGraph *G, int v);
 int main()
 {
-    HuffmanTree HT;
-    HuffmanCode HC;
-    int i, n;
-    scanf("%d", &n);
-    CreateHuffman_tree(HT, n);/*建立哈夫曼树*/
-    Huffman_code(HT, HC, n);/*哈夫曼树编码*/
-    for (i = 1;i <= n;i++)/*输出字符、权值及编码*/
-        printf("编码是：  %s\n",HC[i]);
+    Vertex v;
+    ALGraph G;
+    CreatALGraph(&G);
+    scanf("%d", &v);
+    printf("BFS from %d:", v);
+    BFS(&G, v);
     return 0;
 }
 
+void BFS(ALGraph *G, int v)
+{
+    int q[20];
+    int tt = 0, hh = 0;
+    q[tt++] = v;
+    visited[v] = TRUE;
+    while (hh <= tt)
+    {
+        int t = q[--tt];
+        for (ArcNode *p = G->vertices[t].firstarc; p != NULL; p = p->nextarc)
+        {
+            q[tt++] = p->adjvex;
+            visited[p->adjvex] = TRUE;
+            printf("%d", p->adjvex);
+        }
+    }
+}
