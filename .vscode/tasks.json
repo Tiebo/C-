@@ -19,7 +19,7 @@
                 "-I",
                 "${workspaceFolder}/include",
                 "-o",
-                "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
+                "${fileDirname}/bin/${fileBasenameNoExtension}.exe",
                 "-D__USE_MINGW_ANSI_STDIO", // 用MinGW写C时留着，否则不需要，用于支持printf的%zd和%Lf等
                 "-Wall", // 开启额外警告
             ],
