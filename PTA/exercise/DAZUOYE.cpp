@@ -1,125 +1,103 @@
-//表达式求值
 #include <iostream>
-#include <cmath>
-#include "MyStack.h"
+#include <cstring>
+#include <algorithm>
+
 using namespace std;
 
-stack<double> num; //创建数值栈
-stack<char> op;    //创建字符栈
+const int N = 20;
+int g[N][N];
+int dist[N];
+int n;
+int path[N];
+bool st[N];
 
-void eval();                              //取出num与op进行运算
-int prop(char c);                         //得到运算符优先级
-void judge(const string &str, int &i);    //根据字符判断进行哪一步操作
-void ReadNumber(const string str, int &i); //根据字符串读入数值
-bool isNumber(const string &str, int &i); //判断是否为数字
-bool isNegative(const string &str,const int &i);//判断是否为负数
+void init()
+{
+    // A B C D E F G H I  J  K  L   M  N
+    // 1 2 3 4 5 6 7 8 9 10 11 12  13 14
+    memset(g, 0x3f, sizeof(g));
+    g[1][2] = 1;
+    g[2][1] = 1;
+    g[1][3] = 1;
+    g[3][1] = 1;
+    g[1][4] = 3;
+    g[4][1] = 3;
+    g[3][5] = 1;
+    g[5][3] = 1;
+    g[5][6] = 1;
+    g[6][5] = 1;
+    g[2][7] = 2;
+    g[7][2] = 2;
+    g[4][13] = 3;
+    g[13][4] = 3;
+    g[13][14] = 5;
+    g[14][13] = 5;
+    g[14][11] = 6;
+    g[11][14] = 6;
+    g[6][9] = 2;
+    g[9][6] = 2;
+    g[9][12] = 3;
+    g[12][9] = 3;
+    g[12][11] = 2;
+    g[11][12] = 2;
+    g[7][10] = 5;
+    g[10][7] = 5;
+    g[10][12] = 2;
+    g[12][10] = 2;
+    n = 14;
+}
+
+int dijkstra(int ori, int end)
+{
+    //初始化全部距离为无穷，初始点ori距离为0
+    memset(dist, 0x3f, sizeof(dist));
+    memset(path, -1, sizeof(path));
+    path[ori] = 0;
+    dist[ori] = 0;
+    //循环n-1次
+    for (int i = 0; i < n - 1; i++)
+    {
+        //每次从还没被确定最短路的集合中找到距离源点最近的点
+        int t = -1;
+        for (int j = 1; j <= n; j++)
+            if (!st[j] && (t == -1 || dist[t] > dist[j]))
+                t = j;
+        //比较，然后更新该点的最短路径
+        for (int j = 1; j <= n; j++)
+        {
+            if (dist[j] > dist[t] + g[t][j])
+            {
+                dist[j] = dist[t] + g[t][j];
+                path[j] = t;
+            }
+        }
+        st[t] = true;
+    }
+    //如果未得到最短路
+    if (dist[end] == 0x3f3f3f3f)
+        return -1;
+    return dist[end];
+}
 
 int main()
 {
-  //读入字符串
-  string str;
-  printf("请输入中缀表达式：\n");
-  getline(cin, str);
+    init();
 
-  printf("操作数栈栈顶元素变化：\n");
-  for (int i = 0; i < str.size(); i++)
-    judge(str, i);
+    char ori, end;
+    printf("请输入你的起点与终点:\n");
+    scanf("%c %c", &ori, &end);
+    int a = ori - 64, b = end - 64;
+    int res = dijkstra(b, a);
 
-  while (!op.empty())
-    eval();
-
-  printf("表达式的结果为：%.2lf ", num.top());
-
-  return 0;
-}
-
-void eval()
-{
-  //取出数值并运算 顺序不能变！！！
-  double b = num.top();num.pop();
-  double a = num.top();num.pop();
-  char c = op.top();op.pop();
-  //做运算
-  double x = 0;
-  if (c == '+')       x = a + b;
-  else if (c == '-')  x = a - b;
-  else if (c == '*')  x = a * b;
-  else if (c == '/')  x = a / b;
-  else if (c == '^')  x = pow(a, b);
-  else if (c == '%')  x = (int)a % (int)b;
-
-  num.push(x);                  //结果压入值栈
-  printf("%.2lf\n", num.top()); //栈顶元素变化
-}
-int prop(char c)
-{
-  int pr;
-  switch (c)
-  {
-  case '+': pr = 1;break;
-  case '-': pr = 1;break;
-  case '*': pr = 2;break;
-  case '/': pr = 2;break;
-  case '%': pr = 2;break;
-  case '^': pr = 3;break;
-  default:  pr = 0; //括号的优先级为0
-  }
-  return pr;
-}
-bool isNegative(const string &str,const int &i)
-{
-  //判断是否为负数
-  if (i == 0 && str[i] == '-' && isdigit(str[i + 1]))
-    return true;
-  else if (str[i] == '-' && !isdigit(str[i - 1]) && isdigit(str[i + 1]))
-    return true;
-
-  return false;
-}
-void ReadNumber(const string str, int &i)
-{
-  //j与k用来计数，flag用来得到负数
-  int j = i, k = 1, flag = 1;
-  double x = 0;
-  //判断是否为负
-  if (isNegative(str, i))
-    flag = -1, j++;
-
-  while (j < str.size() && (isdigit(str[j]) || str[j] == '.'))
-  {
-    if (isdigit(str[j]))
-      x = x * 10 + flag * (str[j++] - '0');//读入整数
-    else if (str[j] == '.')
+    if (res == -1)
+        printf("该点不可达！\n");
+    else
     {
-      j++;
-      x = x + pow(10, -(k++)) * (double)(str[j++] - '0'); //读入小数
+        printf("经过的路径为：%c", a + 64);
+        for (int i = path[a]; path[i] != -1; i = path[i])
+            printf("->%c", i + 64);
+        printf("\n距离为：%d\n", res);
     }
-  }
-  i = j - 1; //因为循环结束后会执行一次j++,所以应该把j-1赋给i
-  num.push(x);
-  printf("%.2lf\n", num.top());
-}
-void judge(const string &str, int &i)
-{
-  char c = str[i]; //得到当前字符
 
-  if (c == ' '){return;} //特判空格
-
-  if (isNegative(str, i) || isdigit(str[i])) //如果c是数字，就读入然后存入栈中
-      ReadNumber(str, i);
-  else if (c == '(') //如果读入左括号，直接压入字符栈
-      op.push(c);
-  else if (c == ')') //如果读入右括号，不断运算直至遇到匹配的左括号
-  {
-    while (op.top() != '(')
-      eval();
-    op.pop();
-  }
-  else
-  {
-    // op的优先级要高于c中top的优先级
-    while (!op.empty() && op.top() != '(' && prop(op.top()) > prop(c))
-      eval();
-    op.push(c); //把当前运算符入栈
-  }
+    return 0;
 }
