@@ -21,9 +21,11 @@ int main()
     if (isprime(x) && (isprime(x + 6) || isprime(x - 6)))
     {
         if (isprime(x - 6))
-            cout << "Yes\n" << x - 6;
+            cout << "Yes\n"
+                 << x - 6;
         else
-            cout << "Yes\n" << x + 6;
+            cout << "Yes\n"
+                 << x + 6;
     }
     else if (!isprime(x) || (!isprime(x + 6) && !isprime(x - 6)))
     {
@@ -32,7 +34,8 @@ int main()
         {
             if (isprime(i) && (isprime(i + 6) || isprime(i - 6)))
             {
-                cout << "No\n" << i;
+                cout << "No\n"
+                     << i;
                 break;
             }
             i++;

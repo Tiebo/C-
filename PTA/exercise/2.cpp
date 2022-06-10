@@ -1,134 +1,84 @@
 #include <stdio.h>
-//#include "conio.h"
 #include <stdlib.h>
-#include <string.h>
-#define TRUE 1
-#define FALSE 0
-#define OK 1
-#define ERROR 0
-#define OVERFLOW -1
-#define MAXSIZE 30
-#define VERTEX_MAX 30 /*最大顶点数*/
-#define VEX_NUM 10
-typedef int Status;
-typedef char Vextype[20]; /*顶点类型*/
-typedef int ElemType;
+#define MVNum 100
+
+int visited[MVNum];
+
 typedef struct
 {
-    ElemType elem[MAXSIZE];
-    int top;
-} SeqStack;         /*定义顺序栈结构*/
-typedef struct node /*边结点定义*/
-{
-    int adjvex;        /*邻接点域*/
-    struct node *next; /*指向下一个边结点的指针域*/
-} EdgeNode;
-typedef struct vnode /*表头结点定义*/
-{
-    int Indegree;   /*顶点入度域*/
-    Vextype vertex; /*顶点信息*/
-    EdgeNode *firstedge;
-} VertexNode;
-typedef struct /*图的邻接表存储*/
-{
-    VertexNode adjlist[VERTEX_MAX];
-    int n, e; /*顶点数和边数*/
-} ALGraph;
+    char vexs[MVNum];       //顶点向量
+    int arcs[MVNum][MVNum]; //邻接矩阵
+    int vexnum, arcnum;     //顶点数，边数
+} AMGraph;
 
-void InitStack_Sq(SeqStack &s) /*初始化栈操作*/
+int DFS(AMGraph G, int v);  //以v为起点遍历图G（v所在的连通分量）
+int DFSTraverse(AMGraph G); //遍历图G
+
+int LocateVex(AMGraph G, char u) //查询顶点u的下标
 {
-    s.top = -1;
-} /*InitStack_sq*/
-int Empty_Sq(SeqStack s) /*判栈是否为空*/
-{
-    if (s.top == -1)
-        return 1;
-    else
-        return 0;
-} /*Empty_sq*/
-Status Push_SeqStack(SeqStack &s, ElemType x)
-{
-    if (s.top == MAXSIZE - 1)
-        return OVERFLOW; /* 栈满不能入栈 */
-    else
-    {
-        s.top++;
-        s.elem[s.top] = x;
-        return OK;
-    }
+    int i, count;
+    for (i = 0; i < G.vexnum; ++i)
+        if (u == G.vexs[i])
+            return i;
+    return -1;
 }
 
-Status Pop_SeqStack(SeqStack &s, ElemType &y)
+void CreateUDG(AMGraph &G)
 {
-    if (Empty_Sq(s))
-        return OVERFLOW; /* 栈空不能出栈 */
-    else
+    int i = 0, j, count;
+    char v1, v2;
+    v1 = getchar();
+    while (v1 != '#')
     {
-        y = s.elem[s.top];
-        s.top--;
-        return OK;
-    } /* 栈顶元素存入*y，返回 */
+        G.vexs[i] = v1;
+        i++;
+        v1 = getchar();
+    }
+    G.vexnum = i;
+    for (i = 0; i < G.vexnum; ++i) //初始化邻接矩阵，所有元素均为0
+        for (j = 0; j < G.vexnum; ++j)
+            G.arcs[i][j] = 0;
+    scanf("\n%c %c", &v1, &v2);
+    while (v1 != '#' && v2 != '#')
+    {
+        i = LocateVex(G, v1);
+        j = LocateVex(G, v2);
+        G.arcs[i][j] = 1;
+        G.arcs[j][i] = 1;
+        scanf("\n%c %c", &v1, &v2);
+    }
 }
-void CreateALGraph(ALGraph &G) /*创建有向图的邻接表*/
-{
-    int i, v, w;
-    int Indegree[VERTEX_MAX] = {0};
-    EdgeNode *s;
-    scanf("%d,%d", &(G.n), &(G.e)); /*输入顶点数n和弧数m*/
-    for (i = 0; i < G.n; i++)
-    {
-        scanf("%s", G.adjlist[i].vertex);
-        G.adjlist[i].firstedge = NULL;
-    }
-    for (w = 0; w < G.e; w++) /*建立边表*/
-    {
-        scanf("%d,%d", &i, &v);
-        s = (EdgeNode *)malloc(sizeof(EdgeNode));
-        s->adjvex = v;
-        Indegree[v]++;                    /*统计各顶点的入度*/
-        s->next = G.adjlist[i].firstedge; /*前插方法*/
-        G.adjlist[i].firstedge = s;
-    }
-    for (i = 0; i < G.n; i++)
-        G.adjlist[i].Indegree = Indegree[i];
-} /*CreateALGraph*/
-void topsort(ALGraph &G);
-
 int main()
 {
-    ALGraph g;
-    CreateALGraph(g);
-    printf("拓扑序列为：");
-    topsort(g);
+    AMGraph G;
+    CreateUDG(G);
+    printf("%d", DFSTraverse(G));
     return 0;
 }
 
-void topsort(ALGraph &G)
+int DFS(AMGraph G, int v) //以v为起点遍历图G（v所在的连通分量）
 {
-    SeqStack stk,res;
-    InitStack_Sq(stk);
-    for (int i = 0; i < G.n; i++)
+    int con = 1;
+    visited[v] = 1;
+    for (int i = 0; i < G.vexnum; i++)
     {
-        if (G.adjlist[i].Indegree == 0)
-            Push_SeqStack(stk,i);
-    }
-    while (Empty_Sq(stk))
-    {
-        int t ;
-        Pop_SeqStack(stk,t);
-        Push_SeqStack(res,t);
-        for (EdgeNode *p = G.adjlist[t].firstedge; p; p = p->next)
+        int j = G.arcs[v][i];
+        if (!visited[j] && G.vexs[j]!='#')
         {
-            int j = p->adjvex;
-            G.adjlist[j].Indegree--;
-            if (G.adjlist[j].Indegree == 0)
-                Push_SeqStack(stk,j);
+            con++;
+            DFS(G, j);
         }
     }
-    for(int i=0;i<res.top;i++)
-    {
-        int j = res.elem[i];
-        printf("%s ",G.adjlist[j].vertex);
-    }
-    
+    return con;
+}
+int DFSTraverse(AMGraph G)
+{
+    int con = 0;
+    int v;
+    for (v = 0; v < G.vexnum; ++v)
+        visited[v] = 0;
+    for (v = 0; v < G.vexnum; ++v)
+        if (!visited[v])
+            con+=DFS(G, v);
+    return con;
 }
