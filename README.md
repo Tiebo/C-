@@ -1,5 +1,1 @@
-# Codefire_C++
-
-## self-study
-
-### C++学习
+#### 算法学习
